@@ -1,3 +1,6 @@
+Prompt: 
+actua como un administrador de base de datos; proyecto cafeteria (Caffenio), que entidades se necesitan para su gestion?
+
 ## Entidades para el Sistema de Gestión de Cafetería (Caffenio)
 
 <img width="1536" height="1024" alt="Copilot_20260512_083124" src="https://github.com/user-attachments/assets/e05b3c75-3823-48db-b0dc-63213ab90fcc" />
