@@ -1883,3 +1883,62 @@ Enums:      PascalCase con valores camelCase
 
 ---
 *Documento generado para el proyecto Caffenio. Versión 1.0.0*
+Prompt:
+Eres un asistente técnico que debe generar un paquete completo listo para desarrollo del proyecto "Caffenio" (Sistema de Gestión de Cafetería). Entrega todo lo siguiente, respetando los requisitos técnicos y formatos solicitados.
+
+1) Resumen del proyecto
+- Nombre: Caffenio
+- Propósito: Sistema para gestionar productos, pedidos, inventario, sucursales, empleados, lealtad y compras a proveedores.
+- Tech stack objetivo: Flutter 3.x + Dart 3.x (cliente móvil y web), Firebase (Auth, Firestore, Storage, Analytics) para la app; MySQL/MariaDB para el DDL relacional y backups; GitHub Actions para CI/CD.
+
+2) Requisitos de entrega (archivos y artefactos)
+Genera los siguientes archivos/artefactos, cada uno como un archivo descargable separado cuando sea posible:
+- `bdcaffenio.sql`: DDL completo (CREATE DATABASE + CREATE TABLE) para **18 tablas** con PK, FK, índices, constraints y tipos según el modelo abajo.
+- `er_diagram.png` y `er_diagram.svg`: Diagrama ER visual con las 18 entidades, atributos clave (PK/FK), y relaciones (cardinalidades mínimas: 1..*, 0..* donde aplique).
+- `seed_data/` carpeta con CSVs para cada tabla (nombres: Categoria.csv, Producto.csv, Ingrediente.csv, Receta.csv, Cliente.csv, TarjetaLealtad.csv, Pedido.csv, DetallePedido.csv, Personalizacion.csv, Pago.csv, Descuento.csv, Sucursal.csv, Empleado.csv, Turno.csv, Inventario.csv, Proveedor.csv, OrdenCompra.csv, DetalleOrdenCompra.csv) con 10–20 filas de ejemplo realistas.
+- `postman_collection.json`: colección Postman con endpoints REST CRUD para Producto, Pedido, Inventario, Sucursal, Empleado, Proveedor, OrdenCompra, Cliente, y autenticación (simulada).
+- `api_schema.graphql` y `api_schema_openapi.yaml`: esquema GraphQL y especificación OpenAPI (REST) que cubran las operaciones principales (consultas, mutaciones, endpoints de autenticación, endpoints para aplicar descuentos y procesar pagos).
+- `flutter_scaffold/` estructura de proyecto (lista de archivos y carpetas) con convenciones Feature‑First Clean Architecture (por feature: presentation, domain, data). Incluye ejemplos de archivos: `main.dart`, `pubspec.yaml` (dependencias), ejemplo de provider/state management, y un ejemplo de pantalla para catálogo y pantalla para gestión de pedidos en tiempo real.
+- `firestore_mapping.md`: mapeo recomendado de colecciones Firestore (users, products, orders, sucursales, loyaltyCards, inventory, promotions), con índices compuestos sugeridos y recomendaciones de denormalización para rendimiento.
+- `github_actions/` carpeta con 2 workflows: `ci.yml` (análisis Flutter, tests, build) y `deploy.yml` (deploy a Firebase Hosting/Functions o instrucciones para despliegue).
+- `README.md`: guía de instalación paso a paso (instalar Flutter, configurar Firebase, importar `bdcaffenio.sql`, ejecutar seed CSVs, ejecutar app localmente, ejecutar workflows).
+- `tests/` carpeta con ejemplos de pruebas unitarias y de integración (Dart/Flutter) y ejemplos de queries SQL para validación de integridad referencial.
+- `acceptance_criteria.md`: lista de criterios de aceptación y ejemplos de consultas SQL y GraphQL para validar funcionalidades clave (crear pedido, descontar inventario, acumular puntos, generar orden de compra cuando stock < mínimo).
+
+3) Modelo de datos (resumen de las 18 entidades)
+Incluye exactamente estas entidades con los atributos sugeridos (marca PK y FK). Asegúrate de que el DDL use estos nombres y tipos:
+
+- Categoria: categoria_id (PK INT AI), nombre VARCHAR(100)
+- Producto: producto_id (PK INT AI), nombre VARCHAR(100), descripcion TEXT, precio DECIMAL(10,2), disponible BOOLEAN, categoria_id (FK)
+- Ingrediente: ingrediente_id (PK INT AI), nombre VARCHAR(100), unidad_medida VARCHAR(50), stock DECIMAL(10,2)
+- Receta: receta_id (PK INT AI), producto_id (FK), ingrediente_id (FK), cantidad DECIMAL(10,2)
+- Cliente: cliente_id (PK INT AI), nombre VARCHAR(150), contacto VARCHAR(150), fecha_registro DATETIME
+- TarjetaLealtad: tarjeta_id (PK INT AI), cliente_id (FK), puntos INT, fecha_ultima_actualizacion DATETIME
+- Pedido: pedido_id (PK INT AI), cliente_id (FK), sucursal_id (FK), fecha DATETIME, total DECIMAL(10,2), estado ENUM('pendiente','listo','entregado','cancelado')
+- DetallePedido: detalle_id (PK INT AI), pedido_id (FK), producto_id (FK), cantidad INT, precio_unitario DECIMAL(10,2), subtotal (computed)
+- Personalizacion: personalizacion_id (PK INT AI), detalle_id (FK), tipo VARCHAR(50), valor VARCHAR(100)
+- Pago: pago_id (PK INT AI), pedido_id (FK), metodo ENUM('efectivo','tarjeta','app'), monto DECIMAL(10,2), referencia VARCHAR(100), fecha DATETIME
+- Descuento: descuento_id (PK INT AI), codigo VARCHAR(50) UNIQUE, descripcion VARCHAR(200), tipo ENUM('porcentaje','monto','combo'), valor DECIMAL(10,2), fecha_inicio DATE, fecha_fin DATE
+- Sucursal: sucursal_id (PK INT AI), nombre VARCHAR(100), ubicacion VARCHAR(200), horario VARCHAR(100), telefono VARCHAR(20), capacidad INT
+- Empleado: empleado_id (PK INT AI), nombre VARCHAR(150), rol ENUM('barista','cajero','gerente','otro'), sucursal_id (FK), fecha_contratacion DATE
+- Turno: turno_id (PK INT AI), empleado_id (FK), sucursal_id (FK), fecha DATE, hora_inicio TIME, hora_fin TIME
+- Inventario: inventario_id (PK INT AI), sucursal_id (FK), ingrediente_id (FK), stock_actual DECIMAL(10,2), stock_minimo DECIMAL(10,2)
+- Proveedor: proveedor_id (PK INT AI), nombre VARCHAR(150), contacto VARCHAR(150), telefono VARCHAR(20)
+- OrdenCompra: orden_id (PK INT AI), proveedor_id (FK), sucursal_id (FK), fecha DATE, estado ENUM('pendiente','recibida','cancelada')
+- DetalleOrdenCompra: detalle_id (PK INT AI), orden_id (FK), ingrediente_id (FK), cantidad DECIMAL(10,2), precio_unitario DECIMAL(10,2)
+
+4) Reglas, constraints y comportamiento esperado
+- Incluye FK con ON DELETE/ON UPDATE apropiados (usar RESTRICT o CASCADE con justificación).
+- Añade índices recomendados para consultas frecuentes (buscar productos por categoría, pedidos por sucursal/cliente, inventario por ingrediente).
+- Implementa triggers o stored procedures opcionales (documentados) para: actualizar stock al recibir OrdenCompra; decrementar stock al confirmar Pedido; acumular puntos en TarjetaLealtad al pagar.
+- Define ejemplos de políticas de seguridad Firestore (reglas) y recomendaciones de roles/claims para Firebase Auth (cliente vs admin/barista).
+
+5) Criterios de aceptación y ejemplos
+- Proporciona 8–12 pruebas/queries concretas (SQL y GraphQL) que validen: creación de pedido con detalle y personalizaciones; pago asociado; inventario decrecido; generación de orden de compra cuando stock < mínimo; canje de puntos; aplicación de descuento; consulta de historial de cliente.
+- Incluye ejemplos de payloads JSON para endpoints y respuestas esperadas.
+
+6) Formato de entrega y prioridades
+- Prioriza: 1) `bdcaffenio.sql`, 2) ER diagram PNG/SVG, 3) seed CSVs, 4) README + instrucciones de import, 5) Flutter scaffold y Firestore mapping, 6) Postman/OpenAPI/GraphQL, 7) CI workflows, 8) tests y acceptance criteria.
+- Para cada archivo generado, incluye un encabezado con una breve explicación (1–2 líneas) y el propósito del archivo.
+
+Genera todo lo anterior en español. Cuando entregues el SQL y los CSVs, indícame exactamente cómo descargar cada archivo (nombres de archivo y contenido). Si no puedes crear archivos descargables directamente, devuelve el contenido completo de cada archivo en bloques separados y claramente etiquetados para que pueda copiarlos y guardarlos localmente. Termina con un checklist de verificación que pueda marcar al importar y probar el sistema.
