@@ -81,3 +81,206 @@ lib/
 Para asegurar que el desarrollo sea fluido, voy a generar el documento maestro de arquitectura.
 
 **¿Deseas que genere ahora el script DDL (`bdcaffenio.sql`) completo con todas las relaciones y restricciones, o prefieres que empiece con la creación de los Modelos en Dart (Flutter) para estas entidades?**
+
+Dependencias: 1 flutter_bloc
+2 get_it
+3 equatable
+4 dio
+5 retrofit
+6 json_annotation
+7 drift
+8 sqlite3_flutter_libs
+9 path_provider
+10 path
+11 shared_preferences
+12 intl
+13 decimal
+14 logger
+15 google_fonts
+16 flutter_svg
+17 connectivity_plus
+18 font_awesome_flutter
+
+sql mejorado:
+
+-- 1. Categoria
+CREATE TABLE Categoria (
+    categoria_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL
+);
+
+-- 2. Producto
+CREATE TABLE Producto (
+    producto_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(10,2) NOT NULL,
+    disponible BOOLEAN DEFAULT TRUE,
+    categoria_id INT,
+    FOREIGN KEY (categoria_id) REFERENCES Categoria(categoria_id)
+);
+
+-- 3. Ingrediente
+CREATE TABLE Ingrediente (
+    ingrediente_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    unidad_medida VARCHAR(50) NOT NULL,
+    stock DECIMAL(10,2) DEFAULT 0.00
+);
+
+-- 4. Receta
+CREATE TABLE Receta (
+    receta_id INT AUTO_INCREMENT PRIMARY KEY,
+    producto_id INT,
+    ingrediente_id INT,
+    cantidad DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (producto_id) REFERENCES Producto(producto_id),
+    FOREIGN KEY (ingrediente_id) REFERENCES Ingrediente(ingrediente_id)
+);
+
+-- 5. Cliente
+CREATE TABLE Cliente (
+    cliente_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    contacto VARCHAR(150),
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. TarjetaLealtad
+CREATE TABLE TarjetaLealtad (
+    tarjeta_id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT,
+    puntos INT DEFAULT 0,
+    fecha_ultima_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES Cliente(cliente_id)
+);
+
+-- 7. Sucursal
+CREATE TABLE Sucursal (
+    sucursal_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    ubicacion VARCHAR(200),
+    horario VARCHAR(100),
+    telefono VARCHAR(20),
+    capacidad INT
+);
+
+-- 8. Pedido
+CREATE TABLE Pedido (
+    pedido_id INT AUTO_INCREMENT PRIMARY KEY,
+    cliente_id INT,
+    sucursal_id INT,
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    total DECIMAL(10,2) NOT NULL,
+    estado ENUM('pendiente', 'listo', 'entregado', 'cancelado') DEFAULT 'pendiente',
+    FOREIGN KEY (cliente_id) REFERENCES Cliente(cliente_id),
+    FOREIGN KEY (sucursal_id) REFERENCES Sucursal(sucursal_id)
+);
+
+-- 9. DetallePedido
+CREATE TABLE DetallePedido (
+    detalle_id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    producto_id INT,
+    cantidad INT NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL,
+    subtotal DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (pedido_id) REFERENCES Pedido(pedido_id),
+    FOREIGN KEY (producto_id) REFERENCES Producto(producto_id)
+);
+
+-- 10. Personalizacion
+CREATE TABLE Personalizacion (
+    personalizacion_id INT AUTO_INCREMENT PRIMARY KEY,
+    detalle_id INT,
+    tipo VARCHAR(50),
+    valor VARCHAR(100),
+    FOREIGN KEY (detalle_id) REFERENCES DetallePedido(detalle_id)
+);
+
+-- 11. Pago
+CREATE TABLE Pago (
+    pago_id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT,
+    metodo ENUM('efectivo', 'tarjeta', 'app') NOT NULL,
+    monto DECIMAL(10,2) NOT NULL,
+    referencia VARCHAR(100),
+    fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pedido_id) REFERENCES Pedido(pedido_id)
+);
+
+-- 12. Descuento
+CREATE TABLE Descuento (
+    descuento_id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(50) UNIQUE,
+    descripcion VARCHAR(200),
+    tipo ENUM('porcentaje', 'monto', 'combo'),
+    valor DECIMAL(10,2) NOT NULL,
+    fecha_inicio DATE,
+    fecha_fin DATE
+);
+
+-- 13. Empleado
+CREATE TABLE Empleado (
+    empleado_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    rol ENUM('barista', 'cajero', 'gerente', 'otro'),
+    sucursal_id INT,
+    fecha_contratacion DATE,
+    FOREIGN KEY (sucursal_id) REFERENCES Sucursal(sucursal_id)
+);
+
+-- 14. Turno
+CREATE TABLE Turno (
+    turno_id INT AUTO_INCREMENT PRIMARY KEY,
+    empleado_id INT,
+    sucursal_id INT,
+    fecha DATE NOT NULL,
+    hora_inicio TIME,
+    hora_fin TIME,
+    FOREIGN KEY (empleado_id) REFERENCES Empleado(empleado_id),
+    FOREIGN KEY (sucursal_id) REFERENCES Sucursal(sucursal_id)
+);
+
+-- 15. Inventario
+CREATE TABLE Inventario (
+    inventario_id INT AUTO_INCREMENT PRIMARY KEY,
+    sucursal_id INT,
+    ingrediente_id INT,
+    stock_actual DECIMAL(10,2) DEFAULT 0.00,
+    stock_minimo DECIMAL(10,2) DEFAULT 0.00,
+    FOREIGN KEY (sucursal_id) REFERENCES Sucursal(sucursal_id),
+    FOREIGN KEY (ingrediente_id) REFERENCES Ingrediente(ingrediente_id)
+);
+
+-- 16. Proveedor
+CREATE TABLE Proveedor (
+    proveedor_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(150) NOT NULL,
+    contacto VARCHAR(150),
+    telefono VARCHAR(20)
+);
+
+-- 17. OrdenCompra
+CREATE TABLE OrdenCompra (
+    orden_id INT AUTO_INCREMENT PRIMARY KEY,
+    proveedor_id INT,
+    sucursal_id INT,
+    fecha DATE DEFAULT (CURRENT_DATE),
+    estado ENUM('pendiente', 'recibida', 'cancelada') DEFAULT 'pendiente',
+    FOREIGN KEY (proveedor_id) REFERENCES Proveedor(proveedor_id),
+    FOREIGN KEY (sucursal_id) REFERENCES Sucursal(sucursal_id)
+);
+
+-- 18. DetalleOrdenCompra
+CREATE TABLE DetalleOrdenCompra (
+    detalle_id INT AUTO_INCREMENT PRIMARY KEY,
+    orden_id INT,
+    ingrediente_id INT,
+    cantidad DECIMAL(10,2) NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (orden_id) REFERENCES OrdenCompra(orden_id),
+    FOREIGN KEY (ingrediente_id) REFERENCES Ingrediente(ingrediente_id)
+);
+
+
